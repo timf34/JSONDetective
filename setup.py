@@ -1,4 +1,10 @@
 from setuptools import setup, find_packages
+import os
+
+here = os.path.abspath(os.path.dirname(__file__))
+with open(os.path.join(here, 'README.md'), encoding='utf-8') as f:
+    long_description = f.read()
+
 
 setup(
     name="jsondetective",
@@ -15,8 +21,8 @@ setup(
     },
     author="timf34",
     author_email="timf34@gmail.com",
-    description="A tool for analyzing JSON structures and generating Python dataclasses",
-    long_description=open("README.md").read(),
+    description="Instantly understand JSON structure through automatic schema inference",
+    long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/timf34/jsondetective",
     classifiers=[
