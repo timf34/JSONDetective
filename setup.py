@@ -1,10 +1,15 @@
 from setuptools import setup, find_packages
-import os
 
-here = os.path.abspath(os.path.dirname(__file__))
-with open(os.path.join(here, 'README.md'), encoding='utf-8') as f:
-    long_description = f.read()
-
+def read_readme():
+    """Read README.md and handle potential UTF-8 BOM."""
+    try:
+        # First try UTF-8
+        with open("README.md", "r", encoding="utf-8") as f:
+            return f.read()
+    except UnicodeDecodeError:
+        # If that fails, try UTF-8-SIG (UTF-8 with BOM)
+        with open("README.md", "r", encoding="utf-8-sig") as f:
+            return f.read()
 
 setup(
     name="jsondetective",
@@ -22,7 +27,7 @@ setup(
     author="Tim Farrelly",
     author_email="timf34@gmail.com",
     description="Instantly understand JSON structure through automatic schema inference",
-    long_description=long_description,
+    long_description=read_readme(),
     long_description_content_type="text/markdown",
     url="https://github.com/timf34/jsondetective",
     classifiers=[
