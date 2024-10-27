@@ -19,7 +19,7 @@ setup(
             "jsondetective=jsondetective.cli:main",
         ],
     },
-    author="timf34",
+    author="Tim Farrelly",
     author_email="timf34@gmail.com",
     description="Instantly understand JSON structure through automatic schema inference",
     long_description=long_description,
