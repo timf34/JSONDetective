@@ -1,11 +1,52 @@
 import click
 from rich.console import Console
 from pathlib import Path
+import json
+from typing import Any, Optional
 
 from .analyzer import JSONSchemaAnalyzer
 from .dataclass_gen import schema_to_dataclass_file, generate_dataclass_code
 
 console = Console()
+
+
+def try_load_json(file_path: Path, encoding: str) -> Optional[Any]:
+    """
+    Attempt to load JSON file with specified encoding.
+    Returns the parsed JSON data if successful, None if failed.
+    """
+    try:
+        with file_path.open('r', encoding=encoding) as f:
+            return json.load(f)
+    except (UnicodeDecodeError, UnicodeError):
+        return None
+    except json.JSONDecodeError as e:
+        # If it's a BOM error, return None to try next encoding
+        if "BOM" in str(e):
+            return None
+        # For other JSON errors, we should raise them as they indicate malformed JSON
+        raise
+
+
+def load_json_with_fallback(file_path: Path) -> Any:
+    """
+    Try to load JSON file with multiple encodings.
+    Raises click.ClickException if all attempts fail.
+    """
+    # List of encodings to try, in order of preference
+    encodings = ['utf-8', 'utf-8-sig', 'latin-1', 'cp1252']
+
+    for encoding in encodings:
+        data = try_load_json(file_path, encoding)
+        if data is not None:
+            console.print(f"[dim]Successfully loaded JSON with {encoding} encoding[/dim]")
+            return data
+
+    # If we get here, none of the encodings worked
+    raise click.ClickException(
+        "Failed to load JSON file. Tried the following encodings: " +
+        ", ".join(encodings)
+    )
 
 
 @click.command()
@@ -43,9 +84,8 @@ def main(json_path: Path, create_dataclass: bool, output_path: Path, class_name:
     try:
         analyzer = JSONSchemaAnalyzer()
 
-        with json_path.open('r', encoding='utf-8') as f:
-            data = analyzer.load_json(f)
-
+        # Use the new fallback loading function
+        data = load_json_with_fallback(json_path)
         analyzer.analyze_json(data)
 
         console.print("\n[bold blue]JSON Schema:[/bold blue]")
@@ -62,6 +102,8 @@ def main(json_path: Path, create_dataclass: bool, output_path: Path, class_name:
                 console.print("\n[bold blue]Generated Dataclass Code:[/bold blue]")
                 console.print(code)
 
+    except click.ClickException:
+        raise
     except Exception as e:
         console.print(f"[bold red]Error:[/bold red] {str(e)}")
         raise click.Abort()
